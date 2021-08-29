@@ -16,11 +16,11 @@
           <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
         </field>
 
-        <field id="city_ar" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+        <!--<field id="city_ar" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
           <label>Display Cities in Arabic</label>
           <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
           <comment>If you want to display City Names in Arabic, Select YES. Please note that this settings is only for Magento, not for AyMakan. AyMakan may still display the name in English</comment>
-        </field>
+        </field>-->
 
         <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
           <label>Title</label>
