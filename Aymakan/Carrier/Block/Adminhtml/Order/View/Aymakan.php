@@ -208,6 +208,7 @@ class Aymakan extends Generic
                 'title' => __('City'),
                 'required' => false,
                 'name' => 'delivery_city',
+                'value' => $this->order->getShippingAddress()->getCity(),
                 'values' => $this->getCities(),
                 'note' => 'Aymakan deliver to specific cities only. Each city has its specific namings as listed in Aymakan documentation.'
             ]
@@ -242,6 +243,8 @@ class Aymakan extends Generic
             ]
         );
 
+        $paymentMethodCode = $this->order->getPayment()->getMethodInstance()->getCode();
+
         $fieldset->addField(
             'is_cod validate',
             'select',
@@ -251,6 +254,7 @@ class Aymakan extends Generic
                 'title' => __('Is COD?'),
                 'required' => false,
                 'name' => 'is_cod',
+                'value' => ($paymentMethodCode === 'cashondelivery') ? '1' : '0',
                 'values' => ['0' => 'No', '1' => 'Yes'],
                 'note' => 'If order is COD, then select Yes.'
             ]
@@ -334,27 +338,32 @@ class Aymakan extends Generic
      */
     public function getCities()
     {
-        $key = 'aymakan_cities';
-        if ($this->scopeConfig->getValue('carriers/aymakan_carrier/city_ar'))
-            $citiesKey = 'city_ar';
-        else
-            $citiesKey = 'city_en';
+        $orderLocale = $this->scopeConfig->getValue('general/locale/code', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $this->order->getStore()->getStoreId());
 
-        $fromCache = $this->cache->load($key);
-        if (!$fromCache)
-        {
-            $cities = $this->api->getCities();
+        //  if ($this->scopeConfig->getValue('carriers/aymakan_carrier/city_ar'))
+        if ($orderLocale == 'ar_SA') {
+            $citiesKey = 'city_ar';
+        } else {
+            $citiesKey = 'city_en';
+        }
+
+        $fromCache = $this->cache->load($citiesKey);
+        if (!$fromCache) {
+            $cities  = $this->api->getCities();
             $options = [];
 
             if (count($cities) > 0) {
                 foreach ($cities as $city) {
-                    $options[$city['city_en']] = addslashes($city[$citiesKey]);
+                    $options[$city[$citiesKey]] = addslashes($city[$citiesKey]);
                 }
             }
-            $this->cache->save(json_encode($options), $key);
-            $fromCache = $this->cache->load($key);
+
+            $this->cache->save(json_encode($options), $citiesKey);
+            $fromCache = $this->cache->load($citiesKey);
         }
+
         $options = json_decode($fromCache);
+
         return $options;
     }
 
