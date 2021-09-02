@@ -269,7 +269,7 @@ class Aymakan extends Generic
                 'title' => __('COD Amount'),
                 'required' => false,
                 'name' => 'cod_amount',
-                'value' => $this->order->getGrandTotal(),
+                'value' => ($paymentMethodCode === 'cashondelivery') ? $this->order->getGrandTotal() : 0,
                 'note' => 'If order is COD, then COD amount is the amount Aymakan driver will be collecting from your customer.'
             ]
         );
