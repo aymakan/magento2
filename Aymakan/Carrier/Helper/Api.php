@@ -42,10 +42,11 @@ class Api extends AbstractHelper
         parent::__construct($context);
         $this->apiKey = $this->scopeConfig->getValue('carriers/aymakan_carrier/api_key');
         $isTesting = $this->scopeConfig->getValue('carriers/aymakan_carrier/testing');
-        if ($isTesting)
+        if ($isTesting) {
             $this->endPoint = $this->testingUrl;
-        else
+        } else {
             $this->endPoint = $this->liveUrl;
+        }
     }
 
     /** Get the list of available cities from Ayamakan. It provides both English and Arabic city names.
@@ -53,7 +54,7 @@ class Api extends AbstractHelper
      */
     public function getCities()
     {
-        $url = $this->endPoint.'/cities';
+        $url = $this->endPoint . '/cities';
         $cities = $this->makeCall($url);
         return $cities['cities'];
     }
@@ -74,7 +75,7 @@ class Api extends AbstractHelper
         $data['collection_phone'] = $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_phone');
         $data['collection_description'] = " ";
 
-        $url = $this->endPoint.'/shipping/create';
+        $url = $this->endPoint . '/shipping/create';
         return $this->makeCall($url, $data, 'POST');
     }
 
@@ -86,22 +87,22 @@ class Api extends AbstractHelper
      */
     private function makeCall($url, $data = null, $type = 'GET')
     {
-        if (!$this->isEnabled())
+        if (!$this->isEnabled()) {
             return false;
+        }
 
         $ch = curl_init();
 
-        if(isset($data) and !empty($data))
-        {
-            curl_setopt($ch,CURLOPT_POST, 1);
-            curl_setopt($ch,CURLOPT_POSTFIELDS, http_build_query($data));
+        if (isset($data) and !empty($data)) {
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
         }
 
         $headers = [
             'Accept: application/json',
-            'Authorization: '.$this->apiKey
+            'Authorization: ' . $this->apiKey
         ];
-        curl_setopt($ch,CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
@@ -110,11 +111,11 @@ class Api extends AbstractHelper
         curl_close($ch);
 
         $result = json_decode($response, true);
-        if (isset($result) and isset($result['errors']))
+        if (isset($result) and isset($result['errors'])) {
             return $result;
+        }
 
-        if(!isset($result['data']))
-        {
+        if (!isset($result['data'])) {
             $this->log($result);
             return $result;
         }
@@ -126,7 +127,7 @@ class Api extends AbstractHelper
         $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/aymakan.log');
         $logger = new \Zend\Log\Logger();
         $logger->addWriter($writer);
-        $logger->err('Error: '.json_encode($data));
+        $logger->err('Error: ' . json_encode($data));
     }
 
     /** Check if the module is enabled or not.
@@ -134,8 +135,9 @@ class Api extends AbstractHelper
      */
     public function isEnabled()
     {
-        if ($this->scopeConfig->getValue('carriers/aymakan_carrier/active'))
+        if ($this->scopeConfig->getValue('carriers/aymakan_carrier/active')) {
             return true;
+        }
         return false;
     }
 }
