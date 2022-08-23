@@ -1,0 +1,16 @@
+.fieldset-column {
+  width: 50%;
+  float: left;
+}
+.fieldset-column legend {
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 1.7rem;
+  padding: 1.4rem 0 .5rem;
+  width: 75%;
+}
+.fieldset-column select {
+  display: block;
+  width: 100%;
+  border: 1px solid #646464;
+  height: 32px;
+}
