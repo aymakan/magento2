@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="admin-2columns-left" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+  <head>
+    <css src="Aymakan_Carrier::css/style.css"/>
+  </head>
+    <body>
+      <referenceContainer name="content">
+          <block class="Aymakan\Carrier\Block\Adminhtml\Order\View\Aymakan" name="aymakan_shipping_modal" template="Aymakan_Carrier::order/view/slideout/form.phtml" ifconfig="carriers/aymakan_carrier/active"/>
+      </referenceContainer>
+      <referenceContainer name="before.body.end">
+        <block class="Magento\Backend\Block\Template" template="Aymakan_Carrier::order/view/slideout/init.phtml"/>
+      </referenceContainer>
+    </body>
+</page>

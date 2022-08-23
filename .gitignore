@@ -1,0 +1,9 @@
+/*
+!.gitignore
+!screenshots
+!README.md
+!/app
+/app/*
+!/app/code/
+!app/code/Aymakan
+!app/code/Aymakan/*
