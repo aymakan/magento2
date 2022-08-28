@@ -14,6 +14,7 @@ use Aymakan\Carrier\Model\CollectionAddressFactory;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Psr\Log\LoggerInterface;
+
 class Api extends AbstractHelper
 {
     /**
@@ -79,18 +80,8 @@ class Api extends AbstractHelper
      */
     public function createShipment($data)
     {
+        if (isset($data['is_collection']) && $data['is_collection'] !== 'new_collection') {
 
-        if (isset($data['is_collection']) && $data['is_collection'] === 'new_collection') {
-            $collectionAddress = [
-                'name' => $data['collection_name'],
-                'email' => $data['collection_email'],
-                'city' => $data['collection_city'],
-                'address' => $data['collection_address'],
-                'phone' => $data['collection_phone'],
-            ];
-
-            $this->collectionAddressFactory->addData($collectionAddress)->save();
-        } else {
             $collectionAddress = [];
 
             if ($data['is_collection'] !== 'default_collection') {
@@ -154,6 +145,20 @@ class Api extends AbstractHelper
             $this->log($result);
             return $result;
         }
+
+        if (isset($data['is_collection']) && $data['is_collection'] === 'new_collection') {
+            // Save New Collection Address
+            $collectionAddress = [
+                'name' => $data['collection_name'],
+                'email' => $data['collection_email'],
+                'city' => $data['collection_city'],
+                'address' => $data['collection_address'],
+                'phone' => $data['collection_phone'],
+            ];
+
+            $this->collectionAddressFactory->addData($collectionAddress)->save();
+        }
+
         return $result['data'];
     }
 
