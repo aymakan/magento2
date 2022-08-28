@@ -3,9 +3,41 @@
  * Copyright © Aymakan, Inc. All rights reserved.
  */
 ?>
-  <div id="<?= /* @escapeNotVerified */ $block->getNameInLayout() ?>" style="display:none">
-      <?= /* @escapeNotVerified */ $block->getFormHtml() ?>
-  </div>
+<style>
+    @media (min-width: 1200px) {
+        #aymakan_shipping_form {
+            display: flex;
+        }
+        #aymakan_shipping_form .details-content > .field.required > .label,
+        #aymakan_shipping_form .fieldset > .field.required > .label,
+        #aymakan_shipping_form .admin__field:not(.admin__field-option) > .admin__field-label {
+            padding-left: 0;
+            text-align: left;
+            margin-left: 0;
+            min-width: 132px;
+            font-size: 12px;
+        }
+        #aymakan_shipping_form .admin__field.field {
+            display: flex;
+        }
+        #aymakan_shipping_form .fieldset:not(:last-child) {
+            padding-right: 30px;
+        }
+        #aymakan_shipping_form .admin__fieldset > .admin__field > .admin__field-control {
+            width: 100%;
+            float: none;
+            margin-left: 0;
+        }
+        #aymakan_shipping_form_fieldset_2 {
+            display: none;
+        }
+    }
+</style>
+<div id="<?= /* @escapeNotVerified */
+$block->getNameInLayout() ?>" style="display:none">
+    <?= /* @escapeNotVerified */
+    $block->getFormHtml() ?>
+</div>
 <script type="text/x-magento-init">
     {
         "#aymakan_shipping_form": {
@@ -14,28 +46,40 @@
     }
 </script>
 <script type="text/javascript">
-  require(
-    ['jquery', 'Magento_Ui/js/modal/modal', 'mage/backend/validation'],
-    function ($, modal) {
-      var options = {
-        type: 'slide',
-        responsive: true,
-        innerScroll: true,
-        title: 'Create Aymakan Shipping',
-        buttons: [
-          {
-            text: $.mage.__('Create Shipping'),
-            class: 'action-primary',
-            click: function () {
-              $("#aymakan_shipping_form").submit();
-            }
-          }
-        ]
-      };
-      var popup = modal(options, $('#aymakan_shipping_modal'));
-      $("#aymakanButton").on('click', function () {
-        $("#aymakan_shipping_modal").modal("openModal");
-      });
-    }
-  );
+    require(
+        ['jquery', 'Magento_Ui/js/modal/modal', 'mage/backend/validation'],
+        function ($, modal) {
+            let options = {
+                type: 'slide',
+                responsive: true,
+                innerScroll: true,
+                title: 'Create Aymakan Shipping',
+                buttons: [
+                    {
+                        text: $.mage.__('Create Shipping'),
+                        class: 'action-primary',
+                        click: function () {
+                            $("#aymakan_shipping_form").submit();
+                        }
+                    }
+                ]
+            };
+
+            var popup = modal(options, $('#aymakan_shipping_modal'));
+            $("#aymakanButton").on('click', function () {
+                $("#aymakan_shipping_modal").modal("openModal");
+            });
+
+            $("#is_collection").on('change', function () {
+                var el = $(this),
+                    collectionAddressFieldset = $('#aymakan_shipping_form_fieldset_2');
+                collectionAddressFieldset.hide();
+                collectionAddressFieldset.find('input').removeClass('required-entry _required');
+                if (el.val() === 'new_collection') {
+                    collectionAddressFieldset.find('input').addClass('required-entry _required');
+                    collectionAddressFieldset.show();
+                }
+            }).trigger('change')
+        }
+    );
 </script>

@@ -5,6 +5,7 @@ namespace Aymakan\Carrier\Block\Adminhtml\Order\View;
 use Aymakan\Carrier\Helper\Api;
 use Magento\Backend\Block\Template\Context;
 use Magento\Backend\Block\Widget\Form\Generic;
+use Magento\Framework\App\CacheInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Data\Form;
 use Magento\Framework\Data\FormFactory;
@@ -13,10 +14,11 @@ use Magento\Framework\Json\EncoderInterface;
 use Magento\Framework\Registry;
 use Magento\Framework\UrlInterface;
 use Magento\Sales\Model\Order;
-use Magento\Framework\App\CacheInterface;
 
 class Aymakan extends Generic
 {
+    protected $collectionAddressFactory;
+
     /**
      * @var Order
      */
@@ -56,23 +58,25 @@ class Aymakan extends Generic
      * @param array $data
      */
     public function __construct(
-        Context $context,
-        Registry $registry,
-        FormFactory $formFactory,
-        EncoderInterface $jsonEncoder,
-        ScopeConfigInterface $scopeConfig,
-        Order $order,
-        CacheInterface $cache,
-        Api $api,
-        array $data = []
+        Context                                                                  $context,
+        Registry                                                                 $registry,
+        FormFactory                                                              $formFactory,
+        EncoderInterface                                                         $jsonEncoder,
+        ScopeConfigInterface                                                     $scopeConfig,
+        Order                                                                    $order,
+        CacheInterface                                                           $cache,
+        Api                                                                      $api,
+        \Aymakan\Carrier\Model\ResourceModel\CollectionAddress\CollectionFactory $collectionAddressFactory,
+        array                                                                    $data = []
     ) {
         parent::__construct($context, $registry, $formFactory, $data);
-        $this->urlBuilder  = $context->getUrlBuilder();
-        $this->jsonEncoder = $jsonEncoder;
-        $this->scopeConfig = $scopeConfig;
-        $this->order       = $order->load($this->_request->getParam('order_id'));
+        $this->urlBuilder               = $context->getUrlBuilder();
+        $this->jsonEncoder              = $jsonEncoder;
+        $this->scopeConfig              = $scopeConfig;
+        $this->collectionAddressFactory = $collectionAddressFactory->create();
+        $this->order                    = $order->load($this->_request->getParam('order_id'));
         $this->setUseContainer(true);
-        $this->api = $api;
+        $this->api   = $api;
         $this->cache = $cache;
     }
 
@@ -85,7 +89,6 @@ class Aymakan extends Generic
      */
     protected function _prepareForm()
     {
-        /** @var Form $form */
         $form = $this->_formFactory->create([
             'data' => [
                 'action' => $this->getUrl('aymakan'),
@@ -127,7 +130,6 @@ class Aymakan extends Generic
             ]
         );
         $address = $this->getAddress();
-
         $fieldset->addField(
             'delivery_name',
             'text',
@@ -137,7 +139,7 @@ class Aymakan extends Generic
                 'title' => __('Name'),
                 'required' => true,
                 'name' => 'delivery_name',
-                'value' => $address->getFirstname().' '.$address->getLastname(),
+                'value' => $address->getFirstname() . ' ' . $address->getLastname(),
             ]
         );
         $fieldset->addField(
@@ -213,11 +215,27 @@ class Aymakan extends Generic
                 'note' => 'Aymakan deliver to specific cities only. Each city has its specific namings as listed in Aymakan documentation.'
             ]
         );
+
+        $fieldset->addField(
+            'is_collection',
+            'select',
+            [
+                'label' => __('Collection Address'),
+                'class' => 'is_collection',
+                'name' => 'is_collection',
+                'values' => $this->getCollectionAddresses()
+            ]
+        );
         $fieldset = $form->addFieldset('aymakan_shipping_form_fieldset_2', [
+            'class' => 'fieldset-column',
+            'legend' => __('New Collection Address Information')
+        ]);
+        $this->collectionAddressFields($fieldset, $form->getHtmlIdPrefix());
+
+        $fieldset = $form->addFieldset('aymakan_shipping_form_fieldset_3', [
             'class' => 'fieldset-column',
             'legend' => __('Shipping Information')
         ]);
-
         $fieldset->addField(
             'delivery_reference validate',
             'text',
@@ -242,9 +260,7 @@ class Aymakan extends Generic
                 'value' => $this->order->getGrandTotal()
             ]
         );
-
         $paymentMethodCode = $this->order->getPayment()->getMethodInstance()->getCode();
-
         $fieldset->addField(
             'is_cod validate',
             'select',
@@ -259,7 +275,6 @@ class Aymakan extends Generic
                 'note' => 'If order is COD, then select Yes.'
             ]
         );
-
         $fieldset->addField(
             'cod_amount validate',
             'text',
@@ -273,7 +288,6 @@ class Aymakan extends Generic
                 'note' => 'If order is COD, then COD amount is the amount Aymakan driver will be collecting from your customer.'
             ]
         );
-
         $fieldset->addField(
             'deliver_items validate',
             'text',
@@ -300,7 +314,102 @@ class Aymakan extends Generic
             ]
         );
 
+
+
+
         $this->setForm($form);
+    }
+
+    /**
+     * @throws LocalizedException
+     * @throws \JsonException
+     */
+    public function collectionAddressFields($fieldset, $htmlIdPrefix)
+    {
+        $fieldset->addField(
+            'collection_name',
+            'text',
+            [
+                'class' => 'edited-data',
+                'label' => __('Collection Name'),
+                'title' => __('Collection Name'),
+                'required' => true,
+                'name' => 'collection_name',
+               // 'value' => $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_name'),
+            ]
+        );
+
+        $fieldset->addField(
+            'collection_email validate-email',
+            'text',
+            [
+                'class' => 'edited-data',
+                'label' => __('Collection Email'),
+                'title' => __('Collection Email'),
+                'required' => true,
+                'name' => 'collection_email',
+               // 'value' => $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_email'),
+            ]
+        );
+
+        $fieldset->addField(
+            'collection_phone',
+            'text',
+            [
+                'class' => 'edited-data',
+                'label' => __('Collection Phone'),
+                'title' => __('Collection Phone'),
+                'required' => true,
+                'name' => 'collection_phone',
+               // 'value' => $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_phone'),
+            ]
+        );
+
+        $fieldset->addField(
+            'collection_address',
+            'text',
+            [
+                'class' => 'edited-data',
+                'label' => __('Collection Address'),
+                'title' => __('Collection Address'),
+                'required' => true,
+                'name' => 'collection_address',
+                // 'value' => $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_address'),
+            ]
+        );
+
+        $fieldset->addField(
+            'collection_city',
+            'select',
+            [
+                'class' => 'edited-data',
+                'label' => __('Collection City'),
+                'title' => __('Collection City'),
+                'required' => false,
+                'name' => 'collection_city',
+              //  'value' => $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_city'),
+                'values' => $this->getCities(),
+            ]
+        );
+        /*
+        /*$this->setChild(
+            'form_after',
+            $this->getLayout()->createBlock(
+                \Magento\Backend\Block\Widget\Form\Element\Dependence::class
+            )
+                ->addFieldMap("{$htmlIdPrefix}is_collection", 'is_collection')
+                ->addFieldMap("{$htmlIdPrefix}collection_name", 'collection_name')
+                ->addFieldMap("{$htmlIdPrefix}collection_email", 'collection_email')
+                ->addFieldMap("{$htmlIdPrefix}collection_phone", 'collection_phone')
+                ->addFieldMap("{$htmlIdPrefix}collection_address", 'collection_address')
+                ->addFieldMap("{$htmlIdPrefix}collection_city", 'collection_city')
+                ->addFieldDependence('collection_name', 'is_collection', 'new_collection')
+                ->addFieldDependence('collection_email', 'is_collection', 'new_collection')
+                ->addFieldDependence('collection_phone', 'is_collection', 'new_collection')
+                ->addFieldDependence('collection_address', 'is_collection', 'new_collection')
+                ->addFieldDependence('collection_city', 'is_collection', 'new_collection')
+        );
+        */
     }
 
     /**
@@ -330,11 +439,36 @@ class Aymakan extends Generic
 
     public function getItemsCount()
     {
-        return (int) $this->order->getTotalQtyOrdered();
+        return (int)$this->order->getTotalQtyOrdered();
     }
 
     /**
      * @return array
+     */
+    public function getCollectionAddresses()
+    {
+        $addresses = $this->collectionAddressFactory->getData();
+
+        $options = [
+            'default_collection' => __('Default Collection Address'),
+            'new_collection' => __('Add New Collection Address'),
+        ];
+
+        if (count($addresses) > 0) {
+            foreach ($addresses as $address) {
+                if (!isset($address['address_id'], $address['name'])) {
+                    continue;
+                }
+                $options[] = ['value' => $address['address_id'], 'label' => '--'.$address['name']];
+            }
+        }
+
+        return $options;
+    }
+
+    /**
+     * @return array
+     * @throws \JsonException
      */
     public function getCities()
     {
@@ -358,15 +492,12 @@ class Aymakan extends Generic
                 }
             }
 
-            $this->cache->save(json_encode($options), $citiesKey);
+            $this->cache->save(json_encode($options, JSON_THROW_ON_ERROR), $citiesKey);
             $fromCache = $this->cache->load($citiesKey);
         }
 
-        $options = json_decode($fromCache);
-
-        return $options;
+        return json_decode($fromCache, true, 512, JSON_THROW_ON_ERROR);
     }
-
 
     /**
      * Check permission for passed action

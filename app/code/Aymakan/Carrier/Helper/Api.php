@@ -10,9 +10,10 @@
 
 namespace Aymakan\Carrier\Helper;
 
+use Aymakan\Carrier\Model\CollectionAddressFactory;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
-
+use Psr\Log\LoggerInterface;
 class Api extends AbstractHelper
 {
     /**
@@ -28,6 +29,13 @@ class Api extends AbstractHelper
      */
     protected $liveUrl = 'https://aymakan.com.sa/api/v2';
 
+    protected $collectionAddressFactory;
+
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
     /**
      * var apiKey
      */
@@ -37,11 +45,16 @@ class Api extends AbstractHelper
      * Api constructor.
      * @param Context $context
      */
-    public function __construct(Context $context)
-    {
+    public function __construct(
+        Context                  $context,
+        CollectionAddressFactory $collectionAddressFactory,
+        LoggerInterface $logger
+    ) {
         parent::__construct($context);
-        $this->apiKey = $this->scopeConfig->getValue('carriers/aymakan_carrier/api_key');
-        $isTesting = $this->scopeConfig->getValue('carriers/aymakan_carrier/testing');
+        $this->collectionAddressFactory = $collectionAddressFactory->create();
+        $this->apiKey                   = $this->scopeConfig->getValue('carriers/aymakan_carrier/api_key');
+        $isTesting                      = $this->scopeConfig->getValue('carriers/aymakan_carrier/testing');
+        $this->logger = $logger;
         if ($isTesting) {
             $this->endPoint = $this->testingUrl;
         } else {
@@ -54,7 +67,7 @@ class Api extends AbstractHelper
      */
     public function getCities()
     {
-        $url = $this->endPoint . '/cities';
+        $url    = $this->endPoint . '/cities';
         $cities = $this->makeCall($url);
         return $cities['cities'];
     }
@@ -62,17 +75,39 @@ class Api extends AbstractHelper
     /** Creates a shipment
      * @param array $data
      * @return array|bool
+     * @throws \Exception
      */
     public function createShipment($data)
     {
-        $data['collection_name'] = $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_name');
-        $data['collection_email'] = $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_email');
-        $data['collection_city'] = $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_city');
-        $data['collection_address'] = $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_address');
+
+        if (isset($data['is_collection']) && $data['is_collection'] === 'new_collection') {
+            $collectionAddress = [
+                'name' => $data['collection_name'],
+                'email' => $data['collection_email'],
+                'city' => $data['collection_city'],
+                'address' => $data['collection_address'],
+                'phone' => $data['collection_phone'],
+            ];
+
+            $this->collectionAddressFactory->addData($collectionAddress)->save();
+        } else {
+            $collectionAddress = [];
+
+            if ($data['is_collection'] !== 'default_collection') {
+                $collectionAddress = $this->collectionAddressFactory->load($data['is_collection']);
+            }
+
+            $data['collection_name']    = isset($collectionAddress['name']) ? $collectionAddress['name'] : $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_name');
+            $data['collection_email']   = isset($collectionAddress['email']) ? $collectionAddress['email'] : $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_email');
+            $data['collection_city']    = isset($collectionAddress['city']) ? $collectionAddress['city'] : $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_city');
+            $data['collection_address'] = isset($collectionAddress['address']) ? $collectionAddress['address'] : $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_address');
+            $data['collection_phone']   = isset($collectionAddress['phone']) ? $collectionAddress['phone'] : $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_phone');
+        }
+
         $data['collection_neighbourhood'] = $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_region');
-        $data['collection_postcode'] = "";
-        $data['collection_country'] = "SA";
-        $data['collection_phone'] = $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_phone');
+        $data['collection_postcode']      = "";
+        $data['collection_country']       = "SA";
+
         $data['collection_description'] = " ";
 
         $url = $this->endPoint . '/shipping/create';
@@ -122,12 +157,12 @@ class Api extends AbstractHelper
         return $result['data'];
     }
 
+    /**
+     * @throws \JsonException
+     */
     protected function log($data)
     {
-        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/aymakan.log');
-        $logger = new \Zend\Log\Logger();
-        $logger->addWriter($writer);
-        $logger->err('Error: ' . json_encode($data));
+        $this->logger->critical('Aymakan Error: ' . json_encode($data, JSON_THROW_ON_ERROR));
     }
 
     /** Check if the module is enabled or not.
@@ -139,5 +174,13 @@ class Api extends AbstractHelper
             return true;
         }
         return false;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAddresses()
+    {
+        return $this->collectionAddressFactory->fetchItem();
     }
 }

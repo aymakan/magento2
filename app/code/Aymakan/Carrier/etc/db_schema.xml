@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="aymakan_collection_address" resource="default" engine="innodb" comment="Aymakan Collection Address">
+        <column xsi:type="smallint" name="address_id" unsigned="false" nullable="false" identity="true" comment="Entity ID"/>
+        <column xsi:type="varchar" name="name" nullable="true" length="255" comment="Collection Name"/>
+        <column xsi:type="varchar" name="phone" nullable="true" length="255" comment="Collection Phone"/>
+        <column xsi:type="varchar" name="email" nullable="true" length="255" comment="Collection Email"/>
+        <column xsi:type="varchar" name="address" nullable="true" length="255" comment="Collection Address"/>
+        <column xsi:type="varchar" name="city" nullable="true" length="255" comment="Collection City"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Collection Address Creation Time"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="address_id"/>
+        </constraint>
+    </table>
+</schema>

@@ -10,16 +10,16 @@
 
 namespace Aymakan\Carrier\Controller\Adminhtml\Index;
 
+use Aymakan\Carrier\Helper\Api;
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
-use Magento\Backend\Model\View\Result\Redirect;
-use Magento\Sales\Model\Order;
-use Magento\Shipping\Model\ShipmentNotifier;
 use Magento\Backend\Model\Auth\Session;
-use Magento\Framework\Message\ManagerInterface;
+use Magento\Backend\Model\View\Result\Redirect;
 use Magento\Framework\DB\Transaction;
+use Magento\Framework\Message\ManagerInterface;
+use Magento\Sales\Model\Order;
 
-use Aymakan\Carrier\Helper\Api;
+use Magento\Shipping\Model\ShipmentNotifier;
 
 class Index extends Action
 {
@@ -83,8 +83,7 @@ class Index extends Action
         Order\Shipment\Track $track,
         ManagerInterface $messages,
         Api $api
-    )
-    {
+    ) {
         parent::__construct($context);
         $this->api = $api;
         $this->order = $order;
@@ -107,8 +106,9 @@ class Index extends Action
 
         /** @var Redirect $resultRedirect */
         $resultRedirect = $this->resultRedirectFactory->create();
-        if (!$post)
+        if (!$post) {
             return $resultRedirect->setPath('*/*/');
+        }
 
         $this->order->loadByAttribute('entity_id', $post['id']);
 
@@ -136,8 +136,7 @@ class Index extends Action
             return $this->_redirect($this->getUrl('sales/order/view/order_id/' . $post['id']));
             exit;
         }
-        if (!isset($results['shipping']))
-        {
+        if (!isset($results['shipping'])) {
             $this->messages->addErrorMessage('An unknown error occurred. Please check Aymakan log file for errors.');
             return $this->_redirect($this->getUrl('sales/order/view/order_id/' . $post['id']));
             exit;
@@ -149,8 +148,9 @@ class Index extends Action
 
         $shipment = $this->convertOrder->toShipment($this->order);
         foreach ($this->order->getAllItems() as $item) {
-            if (!$item->getQtyToShip() || $item->getIsVirtual())
+            if (!$item->getQtyToShip() || $item->getIsVirtual()) {
                 continue;
+            }
 
             $qtyShipped = $item->getQtyToShip();
             $shipmentItem = $this->convertOrder->itemToShipmentItem($item)->setQty($qtyShipped);
@@ -181,12 +181,10 @@ class Index extends Action
             $this->messages->addSuccessMessage('Your shipment is created successfully. Tracking Number: ' . $trackingNumber);
             return $this->_redirect($this->getUrl('sales/order/view/order_id/' . $post['id']));
             exit;
-
         } catch (\Exception $e) {
             $this->messages->addErrorMessage($e->getMessage());
             return $this->_redirect($this->getUrl('sales/order/view/order_id/' . $post['id']));
             exit;
         }
-
     }
 }
