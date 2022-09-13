@@ -75,6 +75,8 @@ class Api extends AbstractHelper
         $data['collection_phone'] = $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_phone');
         $data['collection_description'] = " ";
 
+        $data['cod_amount']  = (isset($data['is_cod']) && $data['is_cod'] !== '0') ? $data['cod_amount'] : 0;
+
         $url = $this->endPoint . '/shipping/create';
         return $this->makeCall($url, $data, 'POST');
     }
