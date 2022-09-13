@@ -81,7 +81,6 @@ class Api extends AbstractHelper
     public function createShipment($data)
     {
         if (isset($data['is_collection']) && $data['is_collection'] !== 'new_collection') {
-
             $collectionAddress = [];
 
             if ($data['is_collection'] !== 'default_collection') {
@@ -98,6 +97,8 @@ class Api extends AbstractHelper
         $data['collection_neighbourhood'] = $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_region');
         $data['collection_postcode']      = "";
         $data['collection_country']       = "SA";
+
+        $data['cod_amount']  = (isset($data['is_cod']) && $data['is_cod'] !== '0') ? $data['cod_amount'] : 0;
 
         $data['collection_description'] = " ";
 
