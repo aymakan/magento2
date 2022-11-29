@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <listingToolbar name="listing_top">
+        <massaction name="listing_massaction" component="Magento_Sales/js/grid/tree-massactions">
+            <action name="create_aymakan_shipping">
+                <settings>
+                    <url path="aymakan/order/massShippingCreate"/>
+                    <type>bulk_aymakan_shipping</type>
+                    <label translate="true">Create Aymakan Shipments</label>
+                </settings>
+            </action>
+            <action name="print_aymakan_awb">
+                <settings>
+                    <url path="aymakan/order/massPrintAwb"/>
+                    <type>bulk_aymakan_print</type>
+                    <label translate="true">Print Aymakan AWB</label>
+                </settings>
+            </action>
+        </massaction>
+    </listingToolbar>
+    <!--<columns name="sales_order_columns">
+        <column name="aymakan_awb">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Aymakan AWB</label>
+                <bodyTmpl>ui/grid/cells/html</bodyTmpl>
+                <visible>false</visible>
+            </settings>
+        </column>
+    </columns>-->
+</listing>

@@ -12,6 +12,7 @@ namespace Aymakan\Carrier\Helper;
 
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use Psr\Log\LoggerInterface;
 
 class Api extends AbstractHelper
 {
@@ -19,10 +20,12 @@ class Api extends AbstractHelper
      * var $endPoint
      */
     private $endPoint = '';
+
     /**
      * var testingUrl
      */
     protected $testingUrl = 'https://dev.aymakan.com.sa/api/v2';
+
     /**
      * var liveUrl
      */
@@ -33,13 +36,16 @@ class Api extends AbstractHelper
      */
     private $apiKey = '';
 
+    private $logger;
+
     /**
      * Api constructor.
      * @param Context $context
      */
-    public function __construct(Context $context)
+    public function __construct(Context $context, LoggerInterface $logger)
     {
         parent::__construct($context);
+        $this->logger = $logger;
         $this->apiKey = $this->scopeConfig->getValue('carriers/aymakan_carrier/api_key');
         $isTesting = $this->scopeConfig->getValue('carriers/aymakan_carrier/testing');
         if ($isTesting) {
@@ -49,7 +55,8 @@ class Api extends AbstractHelper
         }
     }
 
-    /** Get the list of available cities from Ayamakan. It provides both English and Arabic city names.
+    /**
+     * Get the list of available cities from Ayamakan. It provides both English and Arabic city names.
      * @return array|bool
      */
     public function getCities()
@@ -59,7 +66,8 @@ class Api extends AbstractHelper
         return $cities['cities'];
     }
 
-    /** Creates a shipment
+    /**
+     * Creates a shipment
      * @param array $data
      * @return array|bool
      */
@@ -81,7 +89,14 @@ class Api extends AbstractHelper
         return $this->makeCall($url, $data, 'POST');
     }
 
-    /** Make a call to Aymakan API
+    public function createBulkAwb($trackingNumber)
+    {
+        $url = $this->endPoint . '/shipping/bulk_awb/trackings/' . $trackingNumber;
+        return $this->makeCall($url);
+    }
+
+    /**
+     * Make a call to Aymakan API
      * @param $url
      * @param null $data
      * @param string $type
@@ -104,6 +119,7 @@ class Api extends AbstractHelper
             'Accept: application/json',
             'Authorization: ' . $this->apiKey
         ];
+
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -126,13 +142,11 @@ class Api extends AbstractHelper
 
     protected function log($data)
     {
-        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/aymakan.log');
-        $logger = new \Zend\Log\Logger();
-        $logger->addWriter($writer);
-        $logger->err('Error: ' . json_encode($data));
+        $this->logger->error('Error: ' . json_encode($data));
     }
 
-    /** Check if the module is enabled or not.
+    /**
+     * Check if the module is enabled or not.
      * @return bool
      */
     public function isEnabled()

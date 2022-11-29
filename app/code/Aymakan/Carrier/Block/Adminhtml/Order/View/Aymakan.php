@@ -5,6 +5,7 @@ namespace Aymakan\Carrier\Block\Adminhtml\Order\View;
 use Aymakan\Carrier\Helper\Api;
 use Magento\Backend\Block\Template\Context;
 use Magento\Backend\Block\Widget\Form\Generic;
+use Magento\Framework\App\CacheInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Data\Form;
 use Magento\Framework\Data\FormFactory;
@@ -13,7 +14,6 @@ use Magento\Framework\Json\EncoderInterface;
 use Magento\Framework\Registry;
 use Magento\Framework\UrlInterface;
 use Magento\Sales\Model\Order;
-use Magento\Framework\App\CacheInterface;
 
 class Aymakan extends Generic
 {
@@ -137,7 +137,7 @@ class Aymakan extends Generic
                 'title' => __('Name'),
                 'required' => true,
                 'name' => 'delivery_name',
-                'value' => $address->getFirstname().' '.$address->getLastname(),
+                'value' => $address->getFirstname() . ' ' . $address->getLastname(),
             ]
         );
         $fieldset->addField(
@@ -366,7 +366,6 @@ class Aymakan extends Generic
 
         return $options;
     }
-
 
     /**
      * Check permission for passed action

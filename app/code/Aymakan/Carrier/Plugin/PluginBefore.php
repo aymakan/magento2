@@ -8,12 +8,11 @@
 
 namespace Aymakan\Carrier\Plugin;
 
-use Magento\Backend\Block\Widget\Button\Toolbar\Interceptor;
-use Magento\Framework\View\Element\AbstractBlock;
 use Magento\Backend\Block\Widget\Button\ButtonList;
+use Magento\Backend\Block\Widget\Button\Toolbar\Interceptor;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\View\Element\AbstractBlock;
 use Magento\Sales\Model\Order;
-
 
 class PluginBefore
 {
@@ -46,14 +45,11 @@ class PluginBefore
         Interceptor $interceptor,
         AbstractBlock $block,
         ButtonList $buttonList
-    )
-    {
+    ) {
         $this->_request = $block->getRequest();
         $this->order->loadByAttribute('entity_id', $this->_request->order_id);
         $canShip = $this->order->canShip();
-        if ($this->_request->getFullActionName() == 'sales_order_view'
-            AND $this->storeConfig->getValue('carriers/aymakan_carrier/active') == 1
-            AND $canShip) {
+        if ($this->_request->getFullActionName() === 'sales_order_view' and $this->storeConfig->getValue('carriers/aymakan_carrier/active') == 1 and $canShip) {
             $buttonList->add(
                 'aymakanButton',
                 ['label' => __('Create Aymakan Shipping'), 'class' => 'reset'],
