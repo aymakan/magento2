@@ -91,7 +91,10 @@ class Api extends AbstractHelper
 
     public function createBulkAwb($trackingNumber)
     {
-        $url = $this->endPoint . '/shipping/bulk_awb/trackings/' . $trackingNumber;
+        if (!is_array($trackingNumber) && !$trackingNumber) {
+            return ['message'=> __('Invalid Tracking Number Argument (%1)', $trackingNumber)];
+        }
+        $url = $this->endPoint . '/shipping/bulk_awb/trackings/' . implode(',', $trackingNumber);
         return $this->makeCall($url);
     }
 

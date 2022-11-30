@@ -8,14 +8,14 @@ use Magento\Backend\Model\Auth\Session;
 use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Controller\Result\Redirect;
-use Magento\Framework\DB\Transaction;
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Controller\Adminhtml\Order\AbstractMassAction;
 use Magento\Sales\Model\Convert\Order;
+use Magento\Sales\Model\Order\Shipment;
 use Magento\Sales\Model\Order\Shipment\Track;
+use Magento\Sales\Model\Order\Shipment\TrackFactory;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
-use Magento\Shipping\Model\ShipmentNotifier;
 use Magento\Ui\Component\MassAction\Filter;
 
 class MassShippingCreate extends AbstractMassAction implements HttpPostActionInterface
@@ -35,20 +35,22 @@ class MassShippingCreate extends AbstractMassAction implements HttpPostActionInt
     private $api;
     private $session;
     private $convertOrder;
-    private $shipmentNotifier;
     private $track;
-    private $transaction;
+
+    /**
+     * @var \Magento\Sales\Model\Order\Shipment\TrackFactory
+     */
+    protected $trackFactory;
 
     /**
      * @param OrderManagementInterface|null $orderManagement
      */
     public function __construct(
         Context $context,
+        TrackFactory $trackFactory,
         Filter $filter,
         Session $session,
         Order $convertOrder,
-        ShipmentNotifier $shipmentNotifier,
-        Transaction $transaction,
         CollectionFactory $collectionFactory,
         Api $api,
         Track $track,
@@ -56,11 +58,10 @@ class MassShippingCreate extends AbstractMassAction implements HttpPostActionInt
     ) {
         parent::__construct($context, $filter);
         $this->collectionFactory = $collectionFactory;
+        $this->trackFactory = $trackFactory;
         $this->session = $session;
         $this->convertOrder = $convertOrder;
-        $this->shipmentNotifier = $shipmentNotifier;
         $this->api = $api;
-        $this->transaction = $transaction;
         $this->track = $track;
         $orderManagement = $orderManagement ?: ObjectManager::getInstance()->get(
             OrderManagementInterface::class
@@ -76,12 +77,16 @@ class MassShippingCreate extends AbstractMassAction implements HttpPostActionInt
     protected function massAction(AbstractCollection $collection)
     {
         foreach ($collection->getItems() as $order) {
-            if (!$order->canShip()) {
+            $getTracks = $order->getTracksCollection()->fetchItem();
+            if ($getTracks) {
                 $this->messageManager->addErrorMessage(__('Shipment already created for order #%1.', $order->getIncrementId()));
                 continue;
             }
 
             $address = $order->getShippingAddress();
+
+            $paymentMethod = $order->getPayment()->getMethod();
+            $isCod = in_array($paymentMethod, ['cashondelivery', 'cod']) ? 1 : 0;
 
             $post['delivery_name'] = implode(' ', [isset($address['firstname']) ? $address['firstname'] : '', isset($address['lastname']) ? $address['lastname'] : '']);
             $post['delivery_email'] = isset($address['email']) ? $address['email'] : '';
@@ -92,8 +97,8 @@ class MassShippingCreate extends AbstractMassAction implements HttpPostActionInt
             $post['delivery_city'] = $address->getCity();
             $post['reference'] = (string) $order->getIncrementId();
             $post['declared_value'] = $order->getGrandTotal();
-            $post['is_cod'] = $order->hasInvoices() ? 1 : 0;
-            $post['cod_amount'] = $order->hasInvoices() ? $order->getGrandTotal() : '';
+            $post['is_cod'] = $isCod;
+            $post['cod_amount'] = $isCod ? $order->getGrandTotal() : '';
             $post['items'] = (int) $order->getTotalItemCount();
             $post['pieces'] = 1;
             $post['requested_by'] = $this->session->getUser()->getUserName();
@@ -112,43 +117,17 @@ class MassShippingCreate extends AbstractMassAction implements HttpPostActionInt
             }
 
             if (!isset($results['shipping'])) {
-                $this->messageManager->addErrorMessage(__('An unknown error occurred for #%1. Please check Aymakan log file for errors.', $order->getIncrementId()));
+                /* $this->messageManager->addErrorMessage(__('An unknown error occurred for #%1. Please check Aymakan log file for errors.', $order->getIncrementId()));*/
                 continue;
             }
 
-            $aymakanShipment = $results['shipping'];
-            $trackingNumber = $aymakanShipment['tracking_number'];
-            $labelUrl = $aymakanShipment['pdf_label'];
-
-            $shipment = $this->convertOrder->toShipment($order);
-
-            foreach ($order->getAllItems() as $item) {
-                if (!$item->getQtyToShip() || $item->getIsVirtual()) {
-                    continue;
-                }
-                $qtyShipped = $item->getQtyToShip();
-                $shipmentItem = $this->convertOrder->itemToShipmentItem($item)->setQty($qtyShipped);
-                $shipment->addItem($shipmentItem);
-            }
-
-            $shipment->register();
-            $shipment->getOrder()->setIsInProcess(true);
-
             try {
-                $url = '<a target="_blank" href="' . $labelUrl . '" target="_blank">Print Shipping Label</a>';
-                $shipment->addComment(__('Shipment Tracking Number: %1 URL: %2 &nbsp; &nbsp; BY: %3', $trackingNumber, $url, $post['requested_by']), false, false);
-                $shipment->save();
-                $shipment->getOrder()->save();
-                $shipment->save();
+                $this->addShipment($order, $results);
 
-                $this->track->setShipment($shipment);
-                $this->track->setNumber($trackingNumber);
-                $this->track->setCarrierCode('custom');
-                $this->track->setTitle('Aymakan');
-                $this->track->setOrderId($order->getId());
-                $this->track->save();
-                $shipment->addTrack($this->track)->save();
+                $trackingNumber = $results['shipping']['tracking_number'];
+                $pdfLabel = $results['shipping']['pdf_label'];
 
+                $url = '<a target="_blank" href="' . $pdfLabel . '" target="_blank">Print Shipping Label</a>';
                 $order->addStatusHistoryComment(__('Shipment is created. Tracking Number: %1, Shipping Label: %2', $trackingNumber, $url));
 
                 $this->messageManager->addSuccessMessage(__('Your shipment is created successfully. Tracking Number: %1', $trackingNumber));
@@ -160,5 +139,51 @@ class MassShippingCreate extends AbstractMassAction implements HttpPostActionInt
         $resultRedirect = $this->resultRedirectFactory->create();
         $resultRedirect->setPath($this->getComponentRefererUrl());
         return $resultRedirect;
+    }
+
+    /**
+     * @param Shipment $shipment
+     * @param array $trackingNumbers
+     * @param string $carrierCode
+     * @param string $carrierTitle
+     *
+     * @return void
+     */
+    private function addShipment($order, $results)
+    {
+        $aymakanShipment = $results['shipping'];
+        $trackingNumber = $aymakanShipment['tracking_number'];
+        $labelUrl = $aymakanShipment['pdf_label'];
+        $requestedBy = $this->session->getUser()->getUserName();
+
+        $convertOrder = $this->convertOrder;
+
+        $shipment = $convertOrder->toShipment($order);
+
+        foreach ($order->getAllItems() as $item) {
+            if (!$item->getQtyToShip() || $item->getIsVirtual()) {
+                continue;
+            }
+            $qtyShipped = $item->getQtyToShip();
+            $shipmentItem = $convertOrder->itemToShipmentItem($item)->setQty($qtyShipped);
+            $shipment->addItem($shipmentItem);
+        }
+
+        $shipment->register();
+        $shipment->getOrder()->setIsInProcess(true);
+
+        $url = '<a target="_blank" href="' . $labelUrl . '" target="_blank">Print Shipping Label</a>';
+        $shipment->addComment(__('Shipment Tracking Number: %1 URL: %2 &nbsp; &nbsp; BY: %3', $trackingNumber, $url, $requestedBy), false, false);
+
+        $shipment->addTrack(
+            $this->trackFactory->create()
+                ->setNumber($trackingNumber)
+                ->setCarrierCode('custom')
+                ->setTitle('Aymakan')
+        );
+
+        $shipment->save();
+        $shipment->getOrder()->save();
+        $shipment->save();
     }
 }

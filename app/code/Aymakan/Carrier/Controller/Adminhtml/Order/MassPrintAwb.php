@@ -61,9 +61,6 @@ class MassPrintAwb extends AbstractMassAction implements HttpPostActionInterface
         $tracking = [];
         foreach ($collection->getItems() as $order) {
             $track = $order->getTracksCollection()->fetchItem();
-            if ($order->canShip()) {
-                continue;
-            }
             if (!$track) {
                 continue;
             }
@@ -71,18 +68,18 @@ class MassPrintAwb extends AbstractMassAction implements HttpPostActionInterface
             $tracking[] = $track->getTrackNumber();
         }
 
-        $bulkAwb = $this->api->createBulkAwb(implode(',', $tracking));
+        $bulkAwb = $this->api->createBulkAwb($tracking);
 
         $resultRedirect = $this->resultRedirectFactory->create();
-
-        if (isset($bulkAwb['error']) || isset($bulkAwb['errors'])) {
-            $this->messageManager->addErrorMessage($bulkAwb['message']);
-        }
 
         if (isset($bulkAwb['bulk_awb_url'])) {
             $path = $bulkAwb['bulk_awb_url'];
         } else {
             $path = $this->getComponentRefererUrl();
+        }
+
+        if (isset($bulkAwb['error']) || isset($bulkAwb['errors']) || isset($bulkAwb['message'])) {
+            $this->messageManager->addErrorMessage($bulkAwb['message']);
         }
 
         $resultRedirect->setPath($path);
