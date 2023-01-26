@@ -1,0 +1,41 @@
+<?php
+/**
+ * Copyright © Aymakan, Inc. All rights reserved.
+ */
+?>
+  <div id="<?= /* @escapeNotVerified */ $block->getNameInLayout() ?>" style="display:none">
+      <?= /* @escapeNotVerified */ $block->getFormHtml() ?>
+  </div>
+<script type="text/x-magento-init">
+    {
+        "#aymakan_shipping_form": {
+            "validation": {}
+        }
+    }
+</script>
+<script type="text/javascript">
+  require(
+    ['jquery', 'Magento_Ui/js/modal/modal', 'mage/backend/validation'],
+    function ($, modal) {
+      var options = {
+        type: 'slide',
+        responsive: true,
+        innerScroll: true,
+        title: 'Create Aymakan Shipping',
+        buttons: [
+          {
+            text: $.mage.__('Create Shipping'),
+            class: 'action-primary',
+            click: function () {
+              $("#aymakan_shipping_form").submit();
+            }
+          }
+        ]
+      };
+      var popup = modal(options, $('#aymakan_shipping_modal'));
+      $("#aymakanButton").on('click', function () {
+        $("#aymakan_shipping_modal").modal("openModal");
+      });
+    }
+  );
+</script>
