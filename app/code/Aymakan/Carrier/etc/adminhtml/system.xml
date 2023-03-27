@@ -43,7 +43,7 @@
                        showInStore="0">
                     <label>Enable SDD (Same Day Delivery)</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Ensure that you have been granted authorization by aymakan to utilize this service.</comment>
+                    <comment>Please ensure that you have this service enabled by aymakan.</comment>
                 </field>
 
                 <field id="api_key" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1"
