@@ -101,9 +101,7 @@ class Api extends AbstractHelper
 
     /**
      * Make a call to Aymakan API
-     * @param $url
      * @param null $data
-     * @param string $type
      * @return array|bool
      */
     private function makeCall($url, $data = null, string $type = 'GET', $header = [])
