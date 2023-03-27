@@ -39,6 +39,13 @@
                     <comment>For development purpose, set it to Yes. For production, set it to No</comment>
                 </field>
 
+                <field id="is_sdd" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1"
+                       showInStore="0">
+                    <label>Enable SDD (Same Day Delivery)</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Ensure that you have been granted authorization by aymakan to utilize this service.</comment>
+                </field>
+
                 <field id="api_key" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>API Key</label>

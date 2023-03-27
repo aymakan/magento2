@@ -80,6 +80,7 @@ class Api extends AbstractHelper
         $data['collection_neighbourhood'] = $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_region');
         $data['collection_postcode']      = "";
         $data['collection_country']       = "SA";
+        $data['is_sdd']                   = $this->scopeConfig->getValue('carriers/aymakan_carrier/is_sdd');
         $data['collection_phone']         = $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_phone');
         $data['collection_description']   = " ";
 
