@@ -41,7 +41,7 @@
 
                 <field id="is_sdd" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1"
                        showInStore="0">
-                    <label>Enable SDD (Same Day Delivery)</label>
+                    <label>Enable SDD (Same-Day Delivery)</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Please ensure that you have this service enabled by aymakan.</comment>
                 </field>
