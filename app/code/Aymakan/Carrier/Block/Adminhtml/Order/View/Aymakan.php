@@ -354,7 +354,7 @@ class Aymakan extends Generic
 
             if (count($cities) > 0) {
                 foreach ($cities as $city) {
-                    $options[$city[$citiesKey]] = addslashes($city[$citiesKey]);
+                    $options[$city[$citiesKey]] = addslashes($city['city_en'] . ' - ' . $city['city_ar']);
                 }
             }
 
