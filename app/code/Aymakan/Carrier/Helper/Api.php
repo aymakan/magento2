@@ -10,6 +10,7 @@
 
 namespace Aymakan\Carrier\Helper;
 
+use Magento\Framework\App\CacheInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Psr\Log\LoggerInterface;
@@ -38,16 +39,20 @@ class Api extends AbstractHelper
 
     private $logger;
 
+    private $cache;
+    private $cacheKey = 'aymakan_cities_';
+
     /**
      * Api constructor.
      * @param Context $context
      */
-    public function __construct(Context $context, LoggerInterface $logger)
+    public function __construct(Context $context, LoggerInterface $logger, CacheInterface $cache)
     {
         parent::__construct($context);
         $this->logger = $logger;
         $this->apiKey = $this->scopeConfig->getValue('carriers/aymakan_carrier/api_key');
         $isTesting    = $this->scopeConfig->getValue('carriers/aymakan_carrier/testing');
+        $this->cache = $cache;
         if ($isTesting) {
             $this->endPoint = $this->testingUrl;
         } else {
@@ -61,9 +66,19 @@ class Api extends AbstractHelper
      */
     public function getCities()
     {
-        $url    = $this->endPoint . '/cities';
-        $cities = $this->makeCall($url);
-        return $cities['cities'];
+        $cachedCities = $this->cache->load($this->cacheKey);
+
+        if ($cachedCities) {
+            return unserialize($cachedCities);
+        }
+
+        $url         = $this->endPoint . '/cities';
+        $cities      = $this->makeCall($url);
+        $citiesArray = !empty($cities['cities']) ? $cities['cities'] : [];
+        if (!empty($citiesArray)) {
+            $this->cache->save(serialize($citiesArray), $this->cacheKey, []); // Cache forever
+        }
+        return $citiesArray;
     }
 
     /**
@@ -180,7 +195,6 @@ class Api extends AbstractHelper
             $url = $this->endPoint . '/service/price';
 
             return $this->makeCall($url, $data, 'POST', $headers);
-
         } catch (\Exception $exception) {
             $this->log($exception->getMessage());
         }

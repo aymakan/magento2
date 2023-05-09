@@ -1,0 +1,16 @@
+#aymakan_cities .ui-autocomplete {
+    background-color: #fff;
+    list-style: none;
+    padding: 0;
+    border: 1px solid #f0f0f0;
+}
+#aymakan_cities .ui-autocomplete li {
+    padding: 9px;
+    border-bottom: 1px solid #f0f0f0;
+    margin: 0;
+    font-size: 12px;
+}
+#aymakan_cities .ui-autocomplete-loading {
+    background: url("../images/ajax-loading.gif") no-repeat 108% center !important;
+    background-size: 20% !important;
+}
