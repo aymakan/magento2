@@ -148,9 +148,15 @@ class Api extends AbstractHelper
 
         $ch = curl_init();
 
-        if (!empty($data)) {
-            curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        if ($type === 'GET') {
+            if (!empty($data)) {
+                $url .= '?' . http_build_query($data);
+            }
+        } elseif ($type === 'POST') {
+            if (!empty($data)) {
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+            }
         }
 
         $headers = array_merge([
@@ -211,7 +217,9 @@ class Api extends AbstractHelper
                 'declared_amount' => (int)$declaredValue
             ];
 
-            $url = $this->endPoint . '/service/price';
+          //  $url = $this->endPoint . '/service/price';
+
+            $url = 'https://api.aymakan.net/v2/service/price';
 
             return $this->makeCall($url, $data, 'POST', $headers);
         } catch (\Exception $exception) {
