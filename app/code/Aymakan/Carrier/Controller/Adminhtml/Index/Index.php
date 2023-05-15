@@ -80,7 +80,7 @@ class Index extends Action
         Session $session,
         \Magento\Sales\Model\Convert\Order $convertOrder,
         ShipmentNotifier $shipmentNotifier,
-        Magento\Sales\Model\Order\Shipment\Track $track,
+        \Magento\Sales\Model\Order\Shipment\Track $track,
         ManagerInterface $messages,
         Api $api
     ) {
@@ -127,6 +127,7 @@ class Index extends Action
         $post['delivery_country'] = 'SA';
         $post['reference'] = (string) $this->order->getIncrementId();
         $results = $this->api->createShipment($post);
+
         if (isset($results['errors'])) {
             $messages = 'You have errors: ';
 

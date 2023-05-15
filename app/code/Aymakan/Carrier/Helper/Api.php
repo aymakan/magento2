@@ -52,7 +52,7 @@ class Api extends AbstractHelper
         $this->logger = $logger;
         $this->apiKey = $this->scopeConfig->getValue('carriers/aymakan_carrier/api_key');
         $isTesting    = $this->scopeConfig->getValue('carriers/aymakan_carrier/testing');
-        $this->cache = $cache;
+        $this->cache  = $cache;
         if ($isTesting) {
             $this->endPoint = $this->testingUrl;
         } else {
@@ -82,6 +82,23 @@ class Api extends AbstractHelper
     }
 
     /**
+     * Get the list of available cities from Ayamakan. It provides both English and Arabic city names.
+     * @return array|bool
+     */
+    public function getCityAlias($city = null)
+    {
+        $url = 'https://api.aymakan.net/v2/city?alias=' . urlencode($city);
+
+        $response = $this->makeCall($url);
+
+        if (isset($response['error'])) {
+            return $response;
+        }
+
+        return isset($response['cities']) ? $response['cities'][0]['city_en'] : null;
+    }
+
+    /**
      * Creates a shipment
      * @param array $data
      * @return array|bool
@@ -99,12 +116,13 @@ class Api extends AbstractHelper
         // Check if is same city and sdd enabled.
         $data['is_sdd'] = (($data['collection_city'] === $data['delivery_city']) && $this->scopeConfig->getValue('carriers/aymakan_carrier/is_sdd')) ? 1 : 0;
 
-        $data['collection_phone']         = $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_phone');
-        $data['collection_description']   = " ";
+        $data['collection_phone']       = $this->scopeConfig->getValue('carriers/aymakan_carrier/collection_phone');
+        $data['collection_description'] = " ";
 
         $data['cod_amount'] = (isset($data['is_cod']) && $data['is_cod'] !== '0') ? $data['cod_amount'] : 0;
 
         $url = $this->endPoint . '/shipping/create';
+
         return $this->makeCall($url, $data, 'POST');
     }
 
@@ -130,14 +148,14 @@ class Api extends AbstractHelper
 
         $ch = curl_init();
 
-        if (isset($data) and !empty($data)) {
+        if (!empty($data)) {
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
         }
 
         $headers = array_merge([
             'Accept: application/json',
-            'Authorization: ' . $this->apiKey
+            'Authorization:' . $this->apiKey
         ], $header);
 
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -150,6 +168,7 @@ class Api extends AbstractHelper
         curl_close($ch);
 
         $result = json_decode($response, true);
+
         if (isset($result) and isset($result['errors'])) {
             return $result;
         }

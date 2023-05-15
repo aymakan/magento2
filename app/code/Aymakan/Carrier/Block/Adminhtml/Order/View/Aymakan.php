@@ -199,7 +199,26 @@ class Aymakan extends Generic
                 'value' => $this->getAddress()->getPostcode(),
             ]
         );
+
+        $orderCity = $this->order->getShippingAddress()->getCity();
+
+        $cityAlias = $this->api->getCityAlias($orderCity);
+
         $fieldset->addField(
+            'delivery_city validate',
+            'text',
+            [
+                'class' => 'edited-data',
+                'label' => __('City'),
+                'title' => __('City'),
+                'required' => true,
+                'name' => 'delivery_city',
+                'value' => !isset($cityAlias['error']) ? $cityAlias : $orderCity,
+                'note' => 'Aymakan deliver to specific cities only. Each city has its specific namings as listed in Aymakan documentation.',
+                'after_element_html' => isset($cityAlias['error']) ? '<label class="mage-error" id="delivery_city-error-msg">' . $cityAlias['message'] . '</label>' : '',
+            ]
+        );
+        /*$fieldset->addField(
             'delivery_city validate',
             'select',
             [
@@ -208,11 +227,11 @@ class Aymakan extends Generic
                 'title' => __('City'),
                 'required' => false,
                 'name' => 'delivery_city',
-                'value' => $this->order->getShippingAddress()->getCity(),
+                'value' => $cityAlias,
                 'values' => $this->getCities(),
                 'note' => 'Aymakan deliver to specific cities only. Each city has its specific namings as listed in Aymakan documentation.'
             ]
-        );
+        );*/
         $fieldset = $form->addFieldset('aymakan_shipping_form_fieldset_2', [
             'class' => 'fieldset-column',
             'legend' => __('Shipping Information')
@@ -336,12 +355,11 @@ class Aymakan extends Generic
     /**
      * @return array
      */
-    public function getCities()
+    public function getCities($selected = '')
     {
         $orderLocale = $this->scopeConfig->getValue('general/locale/code', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $this->order->getStore()->getStoreId());
 
-        //  if ($this->scopeConfig->getValue('carriers/aymakan_carrier/city_ar'))
-        if ($orderLocale == 'ar_SA') {
+        if ($orderLocale === 'ar_SA') {
             $citiesKey = 'city_ar';
         } else {
             $citiesKey = 'city_en';
@@ -361,6 +379,8 @@ class Aymakan extends Generic
             $this->cache->save(json_encode($options), $citiesKey);
             $fromCache = $this->cache->load($citiesKey);
         }
+
+        //   dd($fromCache);
 
         $options = json_decode($fromCache);
 
