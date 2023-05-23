@@ -128,7 +128,7 @@ class MassShippingCreate extends AbstractMassAction implements HttpPostActionInt
                 $trackingNumber = $results['shipping']['tracking_number'];
                 $pdfLabel = $results['shipping']['pdf_label'];
 
-                $url = '<a target="_blank" href="' . $pdfLabel . '" target="_blank">Print Shipping Label</a>';
+                $url = '<a target="_blank" href="' . $pdfLabel . '">Print Shipping Label1</a>';
                 $order->addStatusHistoryComment(__('Shipment is created. Tracking Number: %1, Shipping Label: %2', $trackingNumber, $url));
 
                 $this->messageManager->addSuccessMessage(__('Your shipment is created successfully. Tracking Number: %1', $trackingNumber));
@@ -173,7 +173,7 @@ class MassShippingCreate extends AbstractMassAction implements HttpPostActionInt
         $shipment->register();
         $shipment->getOrder()->setIsInProcess(true);
 
-        $url = '<a target="_blank" href="' . $labelUrl . '" target="_blank">Print Shipping Label</a>';
+        $url = '<a target="_blank" href="' . $labelUrl . '">Print Shipping Label</a>';
         $shipment->addComment(__('Shipment Tracking Number: %1 URL: %2 &nbsp; &nbsp; BY: %3', $trackingNumber, $url, $requestedBy), false, false);
 
         $shipment->addTrack(

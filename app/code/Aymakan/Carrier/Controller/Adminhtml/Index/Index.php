@@ -125,7 +125,7 @@ class Index extends Action
         $post['pickup_date'] = date('Y-m-d H:i:s');
         $post['delivery_date'] = date('Y-m-d H:i:s');
         $post['delivery_country'] = 'SA';
-        $post['reference'] = (string) $this->order->getIncrementId();
+       // $post['reference'] = (string) $this->order->getIncrementId();
         $results = $this->api->createShipment($post);
 
         if (isset($results['errors'])) {
@@ -163,7 +163,7 @@ class Index extends Action
         $shipment->getOrder()->setIsInProcess(true);
 
         try {
-            $url = '<a target="_blank" href="' . $labelUrl . '" target="_blank">Print Shipping Label</a>';
+            $url = '<a target="_blank" href="' . $labelUrl . '">Print Shipping Label3</a>';
 
             $shipment->addComment('Shipment Tracking Number: ' . $trackingNumber . ' URL: ' . $url . ' &nbsp; &nbsp; BY: ' . $post['requested_by'], false, false);
             $shipment->save();

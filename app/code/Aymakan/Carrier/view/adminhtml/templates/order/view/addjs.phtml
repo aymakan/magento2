@@ -1,0 +1,16 @@
+<?php
+/**
+ * Copyright © Aymakan, Inc. All rights reserved.
+ */
+?>
+<script>
+    require([
+        'jquery'
+    ], function ($) {
+        $('.note-list-comment > a').on('click', function (e) {
+            e.preventDefault();
+            var el = $(this)
+            window.open(el.attr('href'),'Aymakan AWB','width=650,height=800').print()
+        });
+    });
+</script>
