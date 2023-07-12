@@ -2,9 +2,6 @@
 
 namespace Aymakan\Carrier\Controller\Webhook;
 
-/**
- * Webhook Receiver Controller
- */
 use Exception;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
@@ -14,7 +11,7 @@ use Magento\Framework\App\Request\InvalidRequestException;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\RemoteServiceUnavailableException;
 use Magento\Framework\View\Result\PageFactory;
-use Magento\Sales\Model\Order;
+use Magento\Sales\Api\OrderRepositoryInterface;
 use Psr\Log\LoggerInterface;
 
 class Status extends Action implements CsrfAwareActionInterface
@@ -25,9 +22,9 @@ class Status extends Action implements CsrfAwareActionInterface
     protected $_logger;
 
     /**
-     * @var Order
+     * @var OrderRepositoryInterface
      */
-    protected $order;
+    protected $orderRepository;
 
     /**
      * @var ScopeConfigInterface
@@ -40,15 +37,15 @@ class Status extends Action implements CsrfAwareActionInterface
     protected $resultPageFactory;
 
     public function __construct(
-        Context              $context,
-        LoggerInterface      $logger,
+        Context $context,
+        LoggerInterface $logger,
         ScopeConfigInterface $scopeConfig,
-        Order                $order,
-        PageFactory          $resultPageFactory,
+        OrderRepositoryInterface $orderRepository,
+        PageFactory $resultPageFactory
     ) {
-        $this->_logger           = $logger;
-        $this->scopeConfig       = $scopeConfig;
-        $this->order             = $order;
+        $this->_logger = $logger;
+        $this->scopeConfig = $scopeConfig;
+        $this->orderRepository = $orderRepository;
         $this->resultPageFactory = $resultPageFactory;
         parent::__construct($context);
     }
@@ -84,12 +81,6 @@ class Status extends Action implements CsrfAwareActionInterface
         try {
             $data = json_decode($this->getRequest()->getContent(), true, 512, JSON_THROW_ON_ERROR);
 
-            /* if (is_array($data)) {
-                $this->_logger->log(2, 'shipping log', $data);
-            } else {
-                $this->_logger->critical($data);
-            } */
-
             $status = [
                 'AY-0001' => 'ay_awb_created',
                 'AY-0002' => 'ay_pickup_from_collection',
@@ -107,15 +98,17 @@ class Status extends Action implements CsrfAwareActionInterface
 
             if (isset($data['status'], $status[$data['status']], $data['reference'])) {
                 $orderId = (int)$data['reference'];
-                $order   = $this->order->load($orderId);
+                $order = $this->orderRepository->get($orderId);
 
                 $order->setStatus($status[$data['status']]);
+                $order->setState(\Magento\Sales\Model\Order::STATE_COMPLETE);
 
                 $message = $data['reason'] ?? __('Order status is updated by Aymakan.');
 
                 $history = $order->addCommentToStatusHistory($message, $order->getStatus());
                 $history->setIsCustomerNotified(true);
-                $order->save();
+                dd($this->orderRepository->save($order));
+                $this->orderRepository->save($order);
             }
 
         } catch (RemoteServiceUnavailableException $e) {
@@ -124,6 +117,9 @@ class Status extends Action implements CsrfAwareActionInterface
             /** @todo eliminate usage of exit statement */
             // phpcs:ignore Magento2.Security.LanguageConstruct.ExitUsage
             exit;
+        } catch (\Magento\Framework\Exception\CouldNotSaveException $e) {
+            $this->_logger->critical($e);
+            $this->getResponse()->setHttpResponseCode(500);
         } catch (Exception $e) {
             $this->_logger->critical($e);
             $this->getResponse()->setHttpResponseCode(500);

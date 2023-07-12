@@ -33,6 +33,16 @@ class AymakanShipping extends AbstractCarrier implements \Magento\Shipping\Model
     protected $_rateMethodFactory;
 
     /**
+     * @var \Magento\Shipping\Model\Tracking\ResultFactory
+     */
+    protected $_trackFactory;
+
+    /**
+     * @var \Magento\Shipping\Model\Tracking\Result\StatusFactory
+     */
+    protected $_trackStatusFactory;
+
+    /**
      * @var Api
      */
     private $api;
@@ -53,12 +63,16 @@ class AymakanShipping extends AbstractCarrier implements \Magento\Shipping\Model
         \Psr\Log\LoggerInterface                                    $logger,
         \Magento\Shipping\Model\Rate\ResultFactory                  $rateResultFactory,
         \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory $rateMethodFactory,
+        \Magento\Shipping\Model\Tracking\ResultFactory              $trackFactory,
+        \Magento\Shipping\Model\Tracking\Result\StatusFactory       $trackStatusFactory,
         Api                                                         $api,
         array                                                       $data = []
     ) {
-        $this->_rateResultFactory = $rateResultFactory;
-        $this->_rateMethodFactory = $rateMethodFactory;
-        $this->api                = $api;
+        $this->_rateResultFactory  = $rateResultFactory;
+        $this->_rateMethodFactory  = $rateMethodFactory;
+        $this->_trackFactory       = $trackFactory;
+        $this->_trackStatusFactory = $trackStatusFactory;
+        $this->api                 = $api;
         parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
     }
 
@@ -69,6 +83,19 @@ class AymakanShipping extends AbstractCarrier implements \Magento\Shipping\Model
     public function getAllowedMethods()
     {
         return [$this->_code => $this->getConfigData('name')];
+    }
+
+    public function getTrackingInfo($trackings)
+    {
+        $result   = $this->_trackFactory->create();
+        $tracking = $this->_trackStatusFactory->create();
+        $tracking->setCarrier($this->_code);
+        $tracking->setCarrierTitle('Aymakan');
+        $tracking->setTracking($trackings);
+        $tracking->setUrl('https://www.aymakan.com/?tracking=' . $trackings);
+        $result->append($tracking);
+
+        return $tracking;
     }
 
     /**

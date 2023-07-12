@@ -13,18 +13,18 @@ use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Controller\Adminhtml\Order\AbstractMassAction;
 use Magento\Sales\Model\Convert\Order;
 use Magento\Sales\Model\Order\Shipment;
-use Magento\Sales\Model\Order\Shipment\Track;
 use Magento\Sales\Model\Order\Shipment\TrackFactory;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
+use Magento\Shipping\Model\CarrierFactory;
 use Magento\Ui\Component\MassAction\Filter;
 
 class MassShippingCreate extends AbstractMassAction implements HttpPostActionInterface
 {
     /**
      * Authorization level of a basic admin session
+     * const ADMIN_RESOURCE = 'Magento_Sales::cancel';
+     */
 
-    const ADMIN_RESOURCE = 'Magento_Sales::cancel';
-*/
     /**
      * @var OrderManagementInterface
      */
@@ -33,9 +33,21 @@ class MassShippingCreate extends AbstractMassAction implements HttpPostActionInt
      * @var Api
      */
     private $api;
+
+    /**
+     * @var Session
+     */
     private $session;
+
+    /**
+     * @var Order
+     */
     private $convertOrder;
-    private $track;
+
+    /**
+     * @var CarrierFactory
+     */
+    private $carrierFactory;
 
     /**
      * @var \Magento\Sales\Model\Order\Shipment\TrackFactory
@@ -53,7 +65,7 @@ class MassShippingCreate extends AbstractMassAction implements HttpPostActionInt
         Order $convertOrder,
         CollectionFactory $collectionFactory,
         Api $api,
-        Track $track,
+        CarrierFactory $carrierFactory,
         OrderManagementInterface $orderManagement = null
     ) {
         parent::__construct($context, $filter);
@@ -62,7 +74,7 @@ class MassShippingCreate extends AbstractMassAction implements HttpPostActionInt
         $this->session = $session;
         $this->convertOrder = $convertOrder;
         $this->api = $api;
-        $this->track = $track;
+        $this->carrierFactory =  $carrierFactory;
         $orderManagement = $orderManagement ?: ObjectManager::getInstance()->get(
             OrderManagementInterface::class
         );
@@ -179,11 +191,15 @@ class MassShippingCreate extends AbstractMassAction implements HttpPostActionInt
         $shipment->addTrack(
             $this->trackFactory->create()
                 ->setNumber($trackingNumber)
-                ->setCarrierCode('custom')
-                ->setTitle('Aymakan')
+                ->setCarrierCode('aymakan_carrier')
+                ->setTitle('Aymakan Tracking')
         );
 
-        $shipment->save();
+        $carrierInstance = $this->carrierFactory->create('aymakan_carrier');
+        if ($carrierInstance) {
+            $carrierInstance->getTrackingInfo($trackingNumber);
+        }
+
         $shipment->getOrder()->save();
         $shipment->save();
     }

@@ -4,7 +4,6 @@ namespace Aymakan\Carrier\Controller\Adminhtml\Order;
 
 use Aymakan\Carrier\Helper\Api;
 use Magento\Backend\App\Action\Context;
-use Magento\Backend\Model\Auth\Session;
 use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\ResourceConnection;

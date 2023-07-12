@@ -21,6 +21,7 @@ class Api extends AbstractHelper
      * var $endPoint
      */
     private $endPoint = '';
+    private $isTesting = '';
 
     /**
      * var testingUrl
@@ -51,9 +52,9 @@ class Api extends AbstractHelper
         parent::__construct($context);
         $this->logger = $logger;
         $this->apiKey = $this->scopeConfig->getValue('carriers/aymakan_carrier/api_key');
-        $isTesting    = $this->scopeConfig->getValue('carriers/aymakan_carrier/testing');
+        $this->isTesting    = $this->scopeConfig->getValue('carriers/aymakan_carrier/testing');
         $this->cache  = $cache;
-        if ($isTesting) {
+        if ($this->isTesting) {
             $this->endPoint = $this->testingUrl;
         } else {
             $this->endPoint = $this->liveUrl;
@@ -87,7 +88,11 @@ class Api extends AbstractHelper
      */
     public function getCityAlias($city = null)
     {
-        $url = 'https://api.aymakan.net/v2/city?alias=' . urlencode($city);
+        if ($this->isTesting) {
+            $url = 'https://dev-api.aymakan.com.sa/v2/city?alias=' . urlencode($city);
+        } else {
+            $url = 'https://api.aymakan.net/v2/city?alias=' . urlencode($city);
+        }
 
         $response = $this->makeCall($url);
 
