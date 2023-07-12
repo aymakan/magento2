@@ -43,6 +43,11 @@ class AymakanShipping extends AbstractCarrier implements \Magento\Shipping\Model
     protected $_trackStatusFactory;
 
     /**
+     * @var \Magento\Framework\App\Config\ScopeConfigInterface
+     */
+    protected $scopeConfig;
+
+    /**
      * @var Api
      */
     private $api;
@@ -73,6 +78,7 @@ class AymakanShipping extends AbstractCarrier implements \Magento\Shipping\Model
         $this->_trackFactory       = $trackFactory;
         $this->_trackStatusFactory = $trackStatusFactory;
         $this->api                 = $api;
+        $this->scopeConfig = $scopeConfig;
         parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
     }
 
@@ -87,12 +93,19 @@ class AymakanShipping extends AbstractCarrier implements \Magento\Shipping\Model
 
     public function getTrackingInfo($trackings)
     {
+        $this->isTesting    = $this->scopeConfig->getValue('carriers/aymakan_carrier/testing');
+
         $result   = $this->_trackFactory->create();
         $tracking = $this->_trackStatusFactory->create();
         $tracking->setCarrier($this->_code);
         $tracking->setCarrierTitle('Aymakan');
         $tracking->setTracking($trackings);
-        $tracking->setUrl('https://www.aymakan.com/?tracking=' . $trackings);
+        if ($this->isTesting) {
+            $tracking->setUrl('https://dev.aymakan.com/track/' . $trackings);
+        } else {
+            $tracking->setUrl('https://aymakan.com/track/' . $trackings);
+        }
+
         $result->append($tracking);
 
         return $tracking;
