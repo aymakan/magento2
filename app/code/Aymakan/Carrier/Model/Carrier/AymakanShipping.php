@@ -100,6 +100,7 @@ class AymakanShipping extends AbstractCarrier implements \Magento\Shipping\Model
         $tracking->setCarrier($this->_code);
         $tracking->setCarrierTitle('Aymakan');
         $tracking->setTracking($trackings);
+
         if ($this->isTesting) {
             $tracking->setUrl('https://dev.aymakan.com/track/' . $trackings);
         } else {
