@@ -9,6 +9,8 @@ namespace Aymakan\Carrier\Setup\Patch\Data;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\Patch\DataPatchInterface;
 use Magento\Framework\Setup\Patch\PatchVersionInterface;
+use Magento\Sales\Model\Order\StatusFactory;
+use Magento\Sales\Model\ResourceModel\Order\Status;
 
 /**
  * Class AddAymakanOrderStates
@@ -21,14 +23,27 @@ class AddAymakanOrderStatuses implements DataPatchInterface, PatchVersionInterfa
      */
     private $moduleDataSetup;
 
+    private $statusFactory;
+
+    /**
+     * @var Status $statusResourceModel
+     */
+    private $statusResourceModel;
+
     /**
      * AddAymakanOrderStates constructor.
      * @param ModuleDataSetupInterface $moduleDataSetup
+     * @param StatusFactory $statusFactory
+     * @param Status $statusResourceModel
      */
     public function __construct(
-        ModuleDataSetupInterface $moduleDataSetup
+        ModuleDataSetupInterface $moduleDataSetup,
+        StatusFactory $statusFactory,
+        Status $statusResourceModel
     ) {
         $this->moduleDataSetup = $moduleDataSetup;
+        $this->statusFactory = $statusFactory;
+        $this->statusResourceModel = $statusResourceModel;
     }
 
     /**
@@ -55,14 +70,30 @@ class AddAymakanOrderStatuses implements DataPatchInterface, PatchVersionInterfa
             'ay_cancelled' => __('Cancelled'),
             'ay_on_hold' => __('On Hold'),
         ];
+
+        $states = [
+            'ay_awb_created' => 'pending',
+            'ay_pickup_from_collection' => 'processing',
+            'ay_received_warehouse' => 'processing',
+            'ay_out_for_delivery' => 'processing',
+            'ay_not_delivered' => 'closed',
+            'ay_returned' => 'closed',
+            'ay_in_transit' => 'processing',
+            'ay_delayed' => 'holded',
+            'ay_cancelled' => 'canceled',
+            'ay_on_hold' => 'holded',
+        ];
+
         foreach ($statuses as $code => $info) {
-            $data[] = ['status' => $code, 'label' => $info];
+            $status = $this->statusFactory->create();
+            $status->setData([
+                'status' => $code,
+                'label' => $info
+            ]);
+            $this->statusResourceModel->save($status);
+            $status->assignState($states[$code], false, true);
         }
-        $this->moduleDataSetup->getConnection()->insertArray(
-            $this->moduleDataSetup->getTable('sales_order_status'),
-            ['status', 'label'],
-            $data
-        );
+
         /**
          * Prepare database after install
          */
