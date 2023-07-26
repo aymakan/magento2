@@ -29,7 +29,7 @@ class Status extends Action implements CsrfAwareActionInterface
     /**
      * @var ScopeConfigInterface
      */
-    private ScopeConfigInterface $scopeConfig;
+    private $scopeConfig;
 
     /**
      * @var PageFactory
@@ -107,7 +107,6 @@ class Status extends Action implements CsrfAwareActionInterface
 
                 $history = $order->addCommentToStatusHistory($message, $order->getStatus());
                 $history->setIsCustomerNotified(true);
-                dd($this->orderRepository->save($order));
                 $this->orderRepository->save($order);
             }
 
