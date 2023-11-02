@@ -72,12 +72,13 @@ class AymakanShipping extends AbstractCarrier implements \Magento\Shipping\Model
         \Magento\Shipping\Model\Tracking\Result\StatusFactory       $trackStatusFactory,
         Api                                                         $api,
         array                                                       $data = []
-    ) {
-        $this->_rateResultFactory  = $rateResultFactory;
-        $this->_rateMethodFactory  = $rateMethodFactory;
-        $this->_trackFactory       = $trackFactory;
+    )
+    {
+        $this->_rateResultFactory = $rateResultFactory;
+        $this->_rateMethodFactory = $rateMethodFactory;
+        $this->_trackFactory = $trackFactory;
         $this->_trackStatusFactory = $trackStatusFactory;
-        $this->api                 = $api;
+        $this->api = $api;
         $this->scopeConfig = $scopeConfig;
         parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
     }
@@ -93,9 +94,9 @@ class AymakanShipping extends AbstractCarrier implements \Magento\Shipping\Model
 
     public function getTrackingInfo($trackings)
     {
-        $this->isTesting    = $this->scopeConfig->getValue('carriers/aymakan_carrier/testing');
+        $this->isTesting = $this->scopeConfig->getValue('carriers/aymakan_carrier/testing');
 
-        $result   = $this->_trackFactory->create();
+        $result = $this->_trackFactory->create();
         $tracking = $this->_trackStatusFactory->create();
         $tracking->setCarrier($this->_code);
         $tracking->setCarrierTitle('Aymakan');
@@ -122,32 +123,44 @@ class AymakanShipping extends AbstractCarrier implements \Magento\Shipping\Model
             return false;
         }
 
-        // dd($request->getPackageWeight(), $request->getPackageValue());
-
-        // $request->getPackageValue()
-
         $result = $this->_rateResultFactory->create();
 
+        $shippingCost = $this->getConfigData('shipping_cost');
         $pricing = $this->api->getPricing($this->getConfigData('collection_city'), $request->getDestCity(), 1);
 
-        if (isset($pricing['total_price'])) {
-            $method = $this->_rateMethodFactory->create();
-            $method->setCarrier($this->_code);
-            $method->setCarrierTitle($this->getConfigData('title'));
-            $method->setMethod($this->_code);
-            $method->setMethodTitle($this->getConfigData('name'));
+
+        $method = $this->_rateMethodFactory->create();
+        $method->setCarrier($this->_code);
+        $method->setCarrierTitle($this->getConfigData('title'));
+        $method->setMethod($this->_code);
+        $method->setMethodTitle($this->getConfigData('name'));
+
+        if ($shippingCost === 'free') {
+
+            $method->setPrice(0);
+            $method->setCost(0);
+
+        } else if ($shippingCost === 'custom') {
+
+            $method->setPrice($this->getConfigData('custom_cost') ? $this->getConfigData('custom_cost') : 0);
+            $method->setCost($this->getConfigData('custom_cost') ? $this->getConfigData('custom_cost') : 0);
+
+        } else if (isset($pricing['total_price']) && $shippingCost === 'aymakan') {
+
             $method->setPrice($pricing['total_price']);
             $method->setCost($pricing['total_price']);
-            $result->append($method);
+
         } else {
+
             $error = $this->_rateErrorFactory->create();
             $error->setCarrier($this->_code);
             $error->setCarrierTitle($this->getConfigData('title'));
             $error->setErrorMessage($this->getConfigData('title'));
             $error->setErrorMessage($this->getConfigData('specificerrmsg'));
             $result->append($error);
-        }
 
+        }
+        $result->append($method);
         return $result;
     }
 }

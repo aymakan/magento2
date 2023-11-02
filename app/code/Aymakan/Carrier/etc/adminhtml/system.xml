@@ -32,27 +32,34 @@
                     <label>Method Name</label>
                 </field>
 
-                <field id="testing" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1"
+                <field id="shipping_cost" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1"
                        showInStore="0">
-                    <label>Testing</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>For development purpose, set it to Yes. For production, set it to No</comment>
+                    <label>Shipping Cost</label>
+                    <source_model>Aymakan\Carrier\Model\System\Config\ShippingCost</source_model>
                 </field>
 
-                <field id="is_sdd" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1"
+                <field id="custom_cost" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Custom Shipping Cost</label>
+                    <depends>
+                        <field id="shipping_cost">custom</field>
+                    </depends>
+                    <comment>This cost will show on checkout page.</comment>
+                </field>
+
+                <field id="is_sdd" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1"
                        showInStore="0">
                     <label>Enable SDD (Same-Day Delivery)</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Please ensure that you have this service enabled by aymakan.</comment>
                 </field>
 
-                <field id="api_key" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1"
+                <field id="api_key" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>API Key</label>
                     <comment>The API key is available at Aymakan account in Integrations</comment>
                 </field>
 
-                <field id="collection_name" translate="label" type="text" sortOrder="100" showInDefault="1"
+                <field id="collection_name" translate="label" type="text" sortOrder="70" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Collection Name</label>
                     <comment>The collection name or any data below is related to your warehouse contact information.
@@ -60,7 +67,7 @@
                     </comment>
                 </field>
 
-                <field id="collection_email" translate="label" type="text" sortOrder="100" showInDefault="1"
+                <field id="collection_email" translate="label" type="text" sortOrder="80" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Collection Email</label>
                     <comment>The collection email or any data below is related to your warehouse contact information.
@@ -68,13 +75,13 @@
                     </comment>
                 </field>
 
-                <field id="collection_city" translate="label" type="text" sortOrder="110" showInDefault="1"
+                <field id="collection_city" translate="label" type="text" sortOrder="90" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Collection City</label>
                     <comment>The city from which Aymakan will be picking up the shipment</comment>
                 </field>
 
-                <field id="collection_address" translate="label" type="text" sortOrder="120" showInDefault="1"
+                <field id="collection_address" translate="label" type="text" sortOrder="100" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Collection Address</label>
                 </field>
