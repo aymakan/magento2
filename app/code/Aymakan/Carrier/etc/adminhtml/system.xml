@@ -46,6 +46,13 @@
                     <comment>This cost will show on checkout page.</comment>
                 </field>
 
+                <field id="testing" translate="label" type="select" sortOrder="45" showInDefault="1" showInWebsite="1"
+                       showInStore="0">
+                    <label>Testing</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>For development purpose, set it to Yes. For production, set it to No</comment>
+                </field>
+
                 <field id="is_sdd" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1"
                        showInStore="0">
                     <label>Enable SDD (Same-Day Delivery)</label>
