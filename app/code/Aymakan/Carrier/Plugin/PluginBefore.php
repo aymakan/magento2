@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by Altaf Hussain.
- * User: Altaf Hussain
- * Date: 28 January 2020
- * Time: 9:46 AM
- */
 
 namespace Aymakan\Carrier\Plugin;
 
@@ -13,6 +7,7 @@ use Magento\Backend\Block\Widget\Button\Toolbar\Interceptor;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\View\Element\AbstractBlock;
 use Magento\Sales\Model\Order;
+use Magento\Framework\App\RequestInterface;
 
 class PluginBefore
 {
@@ -20,20 +15,31 @@ class PluginBefore
      * @var Order
      */
     private $order;
+
     /**
      * @var ScopeConfigInterface
      */
     private $storeConfig;
 
     /**
+     * @var RequestInterface
+     */
+    private $request;
+
+    /**
      * PluginBefore constructor.
      * @param ScopeConfigInterface $storeConfig
      * @param Order $order
+     * @param RequestInterface $request
      */
-    public function __construct(ScopeConfigInterface $storeConfig, Order $order)
-    {
+    public function __construct(
+        ScopeConfigInterface $storeConfig,
+        Order $order,
+        RequestInterface $request
+    ) {
         $this->order = $order;
         $this->storeConfig = $storeConfig;
+        $this->request = $request;
     }
 
     /**
@@ -46,10 +52,12 @@ class PluginBefore
         AbstractBlock $block,
         ButtonList $buttonList
     ) {
-        $this->_request = $block->getRequest();
-        $this->order->loadByAttribute('entity_id', $this->_request->order_id);
+        $orderId = $this->request->getParam('order_id');
+        $this->order->loadByAttribute('entity_id', $orderId);
         $canShip = $this->order->canShip();
-        if ($this->_request->getFullActionName() === 'sales_order_view' and $this->storeConfig->getValue('carriers/aymakan_carrier/active') == 1 and $canShip) {
+        if ($this->request->getFullActionName() === 'sales_order_view'
+            && $this->storeConfig->getValue('carriers/aymakan_carrier/active') == 1
+            && $canShip) {
             $buttonList->add(
                 'aymakanButton',
                 ['label' => __('Create Aymakan Shipping'), 'class' => 'reset'],

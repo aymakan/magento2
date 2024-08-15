@@ -31,7 +31,7 @@ class Api extends AbstractHelper
     /**
      * var liveUrl
      */
-    protected $liveUrl = 'https://aymakan.com.sa/api/v2';
+    protected $liveUrl = 'https://api.aymakan.net/v2';
 
     /**
      * var apiKey
@@ -88,11 +88,7 @@ class Api extends AbstractHelper
      */
     public function getCityAlias($city = null)
     {
-        if ($this->isTesting) {
-            $url = 'https://dev-api.aymakan.com.sa/v2/city?alias=' . urlencode($city);
-        } else {
-            $url = 'https://api.aymakan.net/v2/city?alias=' . urlencode($city);
-        }
+        $url = $this->endPoint.'/city?alias=' . urlencode($city);
 
         $response = $this->makeCall($url);
 
@@ -222,9 +218,7 @@ class Api extends AbstractHelper
                 'declared_amount' => (int)$declaredValue
             ];
 
-          //  $url = $this->endPoint . '/service/price';
-
-            $url = 'https://api.aymakan.net/v2/service/price';
+            $url = $this->endPoint . '/service/price';
 
             return $this->makeCall($url, $data, 'POST', $headers);
         } catch (\Exception $exception) {
