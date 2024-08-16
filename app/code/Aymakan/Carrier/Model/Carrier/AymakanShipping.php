@@ -125,9 +125,10 @@ class AymakanShipping extends AbstractCarrier implements \Magento\Shipping\Model
 
         $result = $this->_rateResultFactory->create();
 
-        $shippingCost = $this->getConfigData('shipping_cost');
-        $pricing = $this->api->getPricing($this->getConfigData('collection_city'), $request->getDestCity(), 1);
+        $totalWeight = $request->getPackageWeight();
 
+        $shippingCost = $this->getConfigData('shipping_cost');
+        $pricing = $this->api->getPricing($this->getConfigData('collection_city'), $request->getDestCity(), !empty($totalWeight) ? $totalWeight : 1);
 
         $method = $this->_rateMethodFactory->create();
         $method->setCarrier($this->_code);
